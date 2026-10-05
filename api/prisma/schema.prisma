@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PLAYER
+  ADMIN
+}
+
+enum Result {
+  WIN
+  LOSS
+  DRAW
+}
+
+enum GameStatus {
+  IN_PROGRESS
+  FINISHED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  googleId  String   @unique
+  email     String   @unique
+  name      String
+  role      Role     @default(PLAYER)
+  score     Int      @default(0)
+  winStreak Int      @default(0)
+  createdAt DateTime @default(now())
+  games     Game[]
+}
+
+model Game {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  // 9 characters, one per cell: 'X' (player), 'O' (bot), '-' (empty)
+  board       String     @default("---------")
+  status      GameStatus @default(IN_PROGRESS)
+  result      Result?
+  scoreChange Int?
+  createdAt   DateTime   @default(now())
+  finishedAt  DateTime?
+
+  @@index([userId, status])
+}
